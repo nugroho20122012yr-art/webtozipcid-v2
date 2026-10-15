@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>API Key — Web to ZIP</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="/webtozip/assets/style.css">
+<script src="/webtozip/proxy/proxy.js"></script>
+</head>
+<body>
+<nav class="glass bar"><a class="brand" href="/webtozip/"><b>&lt;/&gt;</b>WebArchiver</a><span class="links"><a  href="/webtozip/">~/ Beranda</a><a  href="/webtozip/scrape/">&gt;_ Scrape</a><a class="on" href="/webtozip/api-key/">{ } API Key</a></span></nav>
+<main>
+<section class="glass card">
+<h1>API key.</h1>
+<p class="sub">Buat key tanpa akun. Kirim lewat header <code>X-API-Key</code> ke <code>POST /webtozip/api/clone</code>.</p>
+<button class="btn full" id="gen">{ } Buat API key</button>
+<div id="res" hidden><div class="key" id="kv"></div><button class="btn ghost" id="cp">// Salin</button></div>
+<div class="st" id="gst" role="status"></div>
+</section>
+<section class="glass card">
+<h2>Kelola key</h2>
+<label for="mk">API key</label>
+<input id="mk" type="text" placeholder="w2z_..." autocomplete="off" spellcheck="false">
+<div class="row"><button class="btn ghost" id="chk">? Cek status</button><button class="btn danger" id="del">x Hapus key</button></div>
+<div id="info" hidden><div class="bar2"><i id="bar"></i></div><div class="st" id="ist"></div></div>
+<div class="st" id="mst" role="status"></div>
+</section>
+</main>
+<script src="/webtozip/assets/app.js"></script>
+<script>
+var $ = function (i) { return document.getElementById(i); };
+$('gen').onclick = async function () {
+  $('gen').disabled = true; $('gst').textContent = '// membuat...';
+  try {
+    var r = await fetch('/webtozip/api/keys', { method: 'POST' }), j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    $('kv').textContent = j.key; $('res').hidden = false; $('gst').textContent = '!! simpan key ini, jangan dibagikan';
+  } catch (e) { $('gst').textContent = '!! ' + e.message; }
+  $('gen').disabled = false;
+};
+$('cp').onclick = function () {
+  navigator.clipboard.writeText($('kv').textContent).then(function () { $('cp').textContent = '=> Tersalin'; setTimeout(function () { $('cp').textContent = '// Salin'; }, 1500); });
+};
+$('chk').onclick = async function () {
+  var k = $('mk').value.trim(); if (!k) return;
+  $('info').hidden = true; $('mst').textContent = '';
+  try {
+    var r = await fetch('/webtozip/api/keys?key=' + encodeURIComponent(k)), j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    $('bar').style.width = Math.round(j.usedToday / j.limit * 100) + '%';
+    $('ist').textContent = 'terpakai ' + j.usedToday + ' / ' + j.limit + ' poin, sisa ' + j.remaining + ' (reset 00:00 UTC)';
+    $('info').hidden = false;
+  } catch (e) { $('mst').textContent = '!! ' + e.message; }
+};
+$('del').onclick = async function () {
+  var k = $('mk').value.trim(); if (!k) return;
+  if (!await ui.ask('Hapus key?', k + '\n\nKey tidak bisa dipakai lagi dan tindakan ini tidak bisa dibatalkan.', 'Hapus')) return;
+  try {
+    var r = await fetch('/webtozip/api/keys?key=' + encodeURIComponent(k), { method: 'DELETE' }), j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    $('mk').value = ''; $('info').hidden = true; $('mst').textContent = '=> key dihapus';
+  } catch (e) { $('mst').textContent = '!! ' + e.message; }
+};
+$('mk').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('chk').click(); });
+</script>
+</body>
+</html>
