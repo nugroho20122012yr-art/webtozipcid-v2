@@ -1,0 +1,1 @@
+{ "name": "webtozipcid-v2", "version": "2.0.0", "private": true, "dependencies": { "jszip": "^3.10.1" } }
