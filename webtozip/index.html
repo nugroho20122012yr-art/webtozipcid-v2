@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Web to ZIP Archiver</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="/webtozip/assets/style.css">
+<script src="/webtozip/proxy/proxy.js"></script>
+</head>
+<body>
+<nav class="glass bar"><a class="brand" href="/webtozip/"><b>&lt;/&gt;</b>WebArchiver</a><span class="links"><a class="on" href="/webtozip/">~/ Beranda</a><a  href="/webtozip/scrape/">&gt;_ Scrape</a><a  href="/webtozip/api-key/">{ } API Key</a></span></nav>
+<main>
+<section class="glass card">
+<h1>Ubah website menjadi arsip ZIP.</h1>
+<p class="sub">Masukkan URL, pilih opsi, lalu unduh HTML dan aset situs dalam satu file ZIP.</p>
+<form id="f" novalidate>
+<label for="url">URL target</label>
+<input id="url" name="url" type="url" placeholder="https://example.com" autocomplete="off" required>
+<label for="key">API key (opsional)</label>
+<input id="key" name="key" type="text" placeholder="w2z_..." autocomplete="off" spellcheck="false">
+<div class="opts">
+<label class="opt"><input type="checkbox" checked><span>Rename Assets<small>Nama aset diurutkan ulang</small></span></label>
+<label class="opt"><input type="checkbox" checked><span>Save Structure<small>Pertahankan struktur folder</small></span></label>
+<label class="opt"><input type="checkbox"><span>Alt Algorithm<small>Mode ambil satu per satu</small></span></label>
+<label class="opt"><input type="checkbox"><span>Mobile Version<small>Ambil tampilan mobile</small></span></label>
+</div>
+<button class="btn full" name="go" type="submit">&lt;run/&gt; Mulai proses kloning</button>
+</form>
+<div class="bar2"><i id="bar"></i></div>
+<div class="st" id="st" role="status">// siap</div>
+<div class="row"><a class="btn" id="dl" hidden>=&gt; Unduh arsip ZIP</a></div>
+</section>
+<section class="glass card">
+<h2>Batas penggunaan</h2>
+<p class="sub">Tanpa key: 250 poin per hari. Dengan API key: 75 poin per hari. Satu kloning memakai 1 poin. Ukuran ZIP dibatasi sekitar 4 MB.</p>
+</section>
+</main>
+<script src="/webtozip/assets/app.js"></script>
+<script>
+var f = document.getElementById('f'), st = document.getElementById('st'), dl = document.getElementById('dl'), bar = document.getElementById('bar');
+f.addEventListener('submit', async function (e) {
+  e.preventDefault();
+  var url = f.url.value.trim();
+  if (!/^https?:\/\/.+/i.test(url)) { ui.info('URL tidak valid', 'Awali dengan https:// atau http://'); return; }
+  var o = Array.prototype.map.call(f.querySelectorAll('input[type=checkbox]'), function (c) { return c.checked; });
+  var h = { 'Content-Type': 'application/json' };
+  if (f.key.value.trim()) h['X-API-Key'] = f.key.value.trim();
+  st.textContent = '// memproses...'; bar.style.width = '60%'; dl.hidden = true; f.go.disabled = true;
+  try {
+    var r = await fetch('/webtozip/api/clone', { method: 'POST', headers: h, body: JSON.stringify({ url: url, renameAssets: o[0], saveStructure: o[1], altAlgorithm: o[2], mobileVersion: o[3] }) });
+    if (!r.ok) { var j = await r.json().catch(function () { return {}; }); throw new Error(j.error || 'Server ' + r.status); }
+    var blob = await r.blob();
+    dl.href = URL.createObjectURL(blob);
+    dl.download = new URL(url).hostname.replace(/[^a-z0-9.]/gi, '_') + '.zip';
+    dl.hidden = false; bar.style.width = '100%';
+    st.textContent = '=> selesai: ' + r.headers.get('X-File-Count') + ' file, sisa ' + r.headers.get('X-Remaining-Points') + ' poin';
+  } catch (err) { bar.style.width = '0'; st.textContent = '!! ' + err.message; }
+  finally { f.go.disabled = false; }
+});
+</script>
+</body>
+</html>
