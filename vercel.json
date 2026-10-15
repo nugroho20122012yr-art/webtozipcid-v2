@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "webtozip/api/*.js", "use": "@vercel/node", "config": { "maxDuration": 30 } },
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "anti-clone.js", "use": "@vercel/static" },
+    { "src": "webtozip/**/*.html", "use": "@vercel/static" },
+    { "src": "webtozip/assets/*", "use": "@vercel/static" },
+    { "src": "webtozip/proxy/*.js", "use": "@vercel/static" }
+  ],
+  "headers": [
+    { "source": "/(.*)", "headers": [
+      { "key": "X-Frame-Options", "value": "DENY" },
+      { "key": "X-Content-Type-Options", "value": "nosniff" },
+      { "key": "Referrer-Policy", "value": "same-origin" }
+    ] }
+  ]
+}
